@@ -1,0 +1,227 @@
+
+<!DOCTYPE >
+<html lang="en" >
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Editor - zouraiz</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="darkmode.css" />
+    <link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css"
+    />
+    <script
+      src="https://kit.fontawesome.com/f8abb678a6.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="container disable">
+      <!-- Skeleton Loading -->
+      <div class="skeleton-container">
+        <div class="skeleton skeleton-image"></div>
+        <div class="skeleton skeleton-text-line"></div>
+        <div class="skeleton skeleton-text-line"></div>
+      </div>
+    
+      <!-- Actual Content -->
+      <div class="content-container" style="display: none;">
+        <h2 class="header">Easy Image Editor</h2>
+        <button id="theme-toggle" class="theme-toggle">
+          <i id="theme-icon" class="fas fa-sun"></i>
+        </button>
+        <div class="wrapper">
+          <div class="editor-panel">
+            <!-- Filter Section -->
+            <div class="filter active">
+              <label class="title">Filters</label>
+              <div class="options">
+                <button id="brightness" class="active">Brightness</button>
+                <button id="saturation">Saturation</button>
+                <button id="inversion">Inversion</button>
+                <button id="grayscale">GrayScale</button>
+                <button id="contrast">Contrast</button>
+                <button id="hue-rotate">Hue Rotate</button>
+              </div>
+              <div class="slider">
+                <div class="filter-info">
+                  <p class="name">Brightness</p>
+                  <p class="value">100%</p>
+                </div>
+                <input type="range" value="100" min="0" max="200" />
+              </div>
+            </div>
+    
+            <!-- Rotate and Flip Section -->
+            <div class="rotate">
+              <label class="title">Rotate & Flip</label>
+              <div class="options">
+                <button id="left"><i class="fa-solid fa-rotate-left"></i></button>
+                <button id="right"><i class="fa-solid fa-rotate-right"></i></button>
+                <button id="horizontal"><i class="bx bx-reflect-vertical"></i></button>
+                <button id="vertical"><i class="bx bx-reflect-horizontal"></i></button>
+              </div>
+            </div>
+    
+            <!-- Image Resizing Section -->
+            <div class="imageResizer">
+              <h2>Resize</h2>
+              <p>Effect will apply automatically</p>
+              <div class="row sizes">
+                <div class="column width">
+                  <label>Width</label>
+                  <input type="number" />
+                </div>
+                <div class="column height">
+                  <label>Height</label>
+                  <input type="number" />
+                </div>
+              </div>
+              <div class="row checkboxes">
+                <div class="column ratio">
+                  <input type="checkbox" id="ratio" checked />
+                  <label for="ratio">Lock aspect ratio</label>
+                </div>
+                <div class="column quality">
+                  <input type="checkbox" id="quality" />
+                  <label for="quality">Reduce Quality</label>
+                </div>
+              </div>
+            </div>
+          </div>
+    
+          <!-- Preview Image Section -->
+          <div class="preview-img">
+            <div class="loading-spinner" style="display: none;"></div>
+            <img id="previewImg" src="./image-placeholder.svg" alt="preview-img" />
+          </div>
+        </div>
+    
+        <!-- Control Buttons -->
+        <div class="controls">
+          <div class="row">
+            <button class="reset-filter">Reset</button>
+            <button class="resizeImage">Resize Image</button>
+          </div>
+          <div class="row">
+            <input type="file" class="file-input" accept="image/*" hidden />
+            <button class="choose-img">Choose Image</button>
+            <button class="camera-btn" style="color: #5372f0;">
+              <i class="fas fa-camera"></i> Camera
+            </button>
+            <button class="save-img">Save Image</button>
+            <button id="remove-bg" class="remove-bg">Remove BG</button>
+          </div>
+        </div>
+      </div>
+     <p class="text">&copy;  <a target="_blank" href="https://zouraiz.netlify.app/">2025 Developer Zouraiz </a> </p>
+    </div>
+    
+     
+
+
+    <!-- JavaScript for Functionality -->
+    <script>
+      // Camera Button Event Listener
+      document.querySelector(".camera-btn").addEventListener("click", () => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*";
+        fileInput.capture = "environment"; // Opens camera directly
+        fileInput.click();
+
+        fileInput.onchange = () => {
+          const file = fileInput.files[0];
+          if (file) {
+            const imgPreview = document.getElementById("previewImg");
+            imgPreview.src = URL.createObjectURL(file);
+
+            imgPreview.addEventListener("load", () => {
+              // Enable editing once the image is loaded
+              document.querySelector(".container").classList.remove("disable");
+              resetFilter(); // Reset filters for the new image
+              widthInput.value = imgPreview.naturalWidth;
+              heightInput.value = imgPreview.naturalHeight;
+              ogImgRatio = imgPreview.naturalWidth / imgPreview.naturalHeight;
+            });
+          }
+        };
+      });
+
+      // Add existing event listeners here
+      chooseImgBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", loadImage);
+      filterSlider.addEventListener("input", updateFilter);
+      resetFilterBtn.addEventListener("click", resetFilter);
+      saveBtn.addEventListener("click", saveImg);
+      resizeImgBtn.addEventListener("click", () => imgResizerElm.classList.toggle("active"));
+      removeBgButton.addEventListener("click", removeBackground);
+
+      // Filter Options
+      filterOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+          document.querySelector(".filter .active")?.classList.remove("active");
+          option.classList.add("active");
+          filterName.innerText = option.innerText;
+
+          switch (option.id) {
+            case "brightness":
+              filterSlider.max = "200";
+              filterSlider.value = brightness;
+              break;
+            case "saturation":
+              filterSlider.max = "200";
+              filterSlider.value = saturation;
+              break;
+            case "inversion":
+              filterSlider.max = "100";
+              filterSlider.value = inversion;
+              break;
+            case "grayscale":
+              filterSlider.max = "100";
+              filterSlider.value = grayscale;
+              break;
+            case "contrast":
+              filterSlider.max = "200";
+              filterSlider.value = contrast;
+              break;
+            case "hue-rotate":
+              filterSlider.max = "360";
+              filterSlider.value = hueRotate;
+              break;
+          }
+          filterValue.innerText = filterSlider.value;
+        });
+      });
+
+      // Rotation Options
+      rotateOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+          switch (option.id) {
+            case "left":
+              rotate -= 90;
+              break;
+            case "right":
+              rotate += 90;
+              break;
+            case "horizontal":
+              flipHorizontal = flipHorizontal === 1 ? -1 : 1;
+              break;
+            case "vertical":
+              flipVertical = flipVertical === 1 ? -1 : 1;
+              break;
+          }
+          applyFilters();
+        });
+      });
+    </script>
+    <script src="app.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
